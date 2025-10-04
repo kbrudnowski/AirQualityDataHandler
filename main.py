@@ -3,16 +3,16 @@ Google Cloud Function for processing air quality data from OpenAQ API.
 Fetches data for specified cities and uploads CSV to Google Cloud Storage.
 """
 
-import json
 import logging
 import os
-from typing import List
-from functions_framework import http
+from flask import Flask, request, jsonify
 
 from services.air_quality_processor import fetch_air_quality_data
 from services.gcs_manager import GCSManager
 from models import ProcessingResult, MeasurementList
 
+# Create Flask app
+app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -32,13 +32,10 @@ def create_processing_result(
     )
 
 
-@http
-def air_quality_processor(request):
+@app.route("/", methods=["GET", "POST"])
+def air_quality_processor():
     """
-    Google Cloud Function entry point for air quality data processing.
-
-    Args:
-        request: HTTP request object
+    Air quality data processing endpoint.
 
     Returns:
         HTTP response with processing results
@@ -47,10 +44,7 @@ def air_quality_processor(request):
         api_key = os.getenv("OPENAQ_API_KEY")
         if not api_key:
             logger.error("OPENAQ_API_KEY environment variable not set")
-            return {
-                "statusCode": 400,
-                "body": json.dumps({"error": "OPENAQ_API_KEY not configured"}),
-            }
+            return jsonify({"error": "OPENAQ_API_KEY not configured"}), 400
 
         # Default parameters (can be overridden via request parameters)
         cities = ["Warsaw", "London"]
@@ -80,15 +74,12 @@ def air_quality_processor(request):
                 all_measurements,
                 error_message="No air quality data found for the specified cities",
             )
-            return {
-                "statusCode": 200,
-                "body": json.dumps(
-                    {
-                        "message": result.error_message,
-                        "measurements_count": result.measurements_count,
-                    }
-                ),
-            }
+            return jsonify(
+                {
+                    "message": result.error_message,
+                    "measurements_count": result.measurements_count,
+                }
+            )
 
         # Upload results to GCS
         gcs_manager = GCSManager()
@@ -99,30 +90,20 @@ def air_quality_processor(request):
         logger.info(f"Successfully processed {len(all_measurements)} measurements")
 
         result = create_processing_result(True, all_measurements, csv_file_path)
-        return {
-            "statusCode": 200,
-            "body": json.dumps(
-                {
-                    "message": "Air quality data processed successfully",
-                    "measurements_count": result.measurements_count,
-                    "csv_file": result.csv_file_path,
-                }
-            ),
-        }
+        return jsonify(
+            {
+                "message": "Air quality data processed successfully",
+                "measurements_count": result.measurements_count,
+                "csv_file": result.csv_file_path,
+            }
+        )
 
     except Exception as e:
         logger.error(f"Error processing air quality data: {str(e)}")
-        return {
-            "statusCode": 500,
-            "body": json.dumps({"error": f"Internal server error: {str(e)}"}),
-        }
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
 
 if __name__ == "__main__":
-    import os
-
     port = int(os.environ.get("PORT", 8080))
-    from functions_framework import create_app
-
-    app = create_app(air_quality_processor)
-    app.run(host="0.0.0.0", port=port)
+    print(f"Starting air quality processor on port {port}")
+    app.run(host="0.0.0.0", port=port, debug=False)
