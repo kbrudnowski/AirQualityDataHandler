@@ -116,3 +116,13 @@ def air_quality_processor(request):
             "statusCode": 500,
             "body": json.dumps({"error": f"Internal server error: {str(e)}"}),
         }
+
+
+if __name__ == "__main__":
+    import os
+
+    port = int(os.environ.get("PORT", 8080))
+    from functions_framework import create_app
+
+    app = create_app(air_quality_processor)
+    app.run(host="0.0.0.0", port=port)
