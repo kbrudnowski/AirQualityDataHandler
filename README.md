@@ -4,6 +4,7 @@ A Python application for fetching air quality data from the OpenAQ API and proce
 
 ## Features
 
+- Automatically determines city boundaries using external geocoding services
 - Fetches latest measurement data for parameters: PM2.5, PM10, O3, NO2
 - Handles data from multiple measurement stations for each city
 - Validates data and handles errors
@@ -15,20 +16,7 @@ A Python application for fetching air quality data from the OpenAQ API and proce
 
 - Python 3.9+
 - OpenAQ account (free): https://openaq.org/
-- Google Cloud Platform with enabled services:
-  - Cloud Functions
-  - Cloud Storage
-  - Cloud Build (optional)
-
-## Deployment
-
-This application is designed to be deployed as a Google Cloud Function. The deployment process depends on your preferred method:
-
-- **Manual deployment** via Google Cloud Console
-- **Automated deployment** via CI/CD pipelines
-- **Container deployment** to Cloud Run
-
-For detailed deployment instructions, refer to your deployment documentation or CI/CD configuration.
+- Google Cloud Platform with enabled services
 
 ## Usage
 
