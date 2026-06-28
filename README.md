@@ -54,3 +54,7 @@ The CSV file contains the following columns:
 - `parameter_unit`: Measurement unit
 - `utc_ts`: Measurement time (UTC)
 
+## License
+
+MIT
+
